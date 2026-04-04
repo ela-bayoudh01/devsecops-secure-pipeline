@@ -1,11 +1,16 @@
-function App() {
-  return (
-    <div style={{ textAlign: 'center', marginTop: '80px', fontFamily: 'sans-serif' }}>
-      <h1>DevSecOps Demo App</h1>
-      <p>This app is protected by an automated security pipeline.</p>
-      <p>Every push is scanned for secrets and vulnerabilities.</p>
-    </div>
-  );
-}
+import { useState } from 'react'
+import Sidebar from './components/Sidebar'
+import CommandSection from './components/CommandSection'
+import { sections } from './data/commands'
+import './App.css'
 
-export default App;
+export default function App() {
+  const [activeSection, setActiveSection] = useState('basics')
+
+  return (
+    <div className="app">
+      <Sidebar activeSection={activeSection} onSelect={setActiveSection} />
+      <CommandSection section={sections[activeSection]} />
+    </div>
+  )
+}
