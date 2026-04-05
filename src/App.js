@@ -14,4 +14,5 @@ export default function App() {
     </div>
   )
 }
-const API_KEY = "AKIAIOSFODNN7EXAMPLE123"
+const AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
+const AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
