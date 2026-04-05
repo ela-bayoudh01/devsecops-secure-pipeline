@@ -1,70 +1,166 @@
-# Getting Started with Create React App
+# DevSecOps Automated Security Pipeline
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A production-ready DevSecOps pipeline built with GitHub Actions, featuring automated secret scanning, container vulnerability scanning, and continuous deployment.
 
-## Available Scripts
+## Live Demo
+🌍 [Git Survival Guide](https://devsecops-secure-pipeline-production.up.railway.app)
 
-In the project directory, you can run:
+## Pipeline Architecture
+git push → Secret Scan (Gitleaks) → Container Scan (Trivy) → Deploy (Railway)
 
-### `npm start`
+Every push to main triggers automatic security checks before deployment.
+If any scan fails → deployment is blocked automatically.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Security Tools
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Tool | Purpose | Trigger |
+|------|---------|---------|
+| Gitleaks | Detect leaked API keys, passwords, tokens | Every push |
+| Trivy | Scan Docker image for CVEs | Every push |
 
-### `npm test`
+## Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Frontend** — React.js
+- **Container** — Docker + nginx
+- **CI/CD** — GitHub Actions
+- **Secret Scanning** — Gitleaks v8.18.2
+- **Container Scanning** — Trivy (CRITICAL severity)
+- **Deployment** — Railway
 
-### `npm run build`
+## How It Works
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 1. Secret Scanning
+Gitleaks scans every commit for hardcoded secrets using 150+ detection patterns including AWS keys, GitHub tokens, and database passwords.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 2. Container Scanning  
+Trivy scans the Docker image against the CVE database and blocks deployment if any CRITICAL vulnerability is found.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 3. Auto Deploy
+Only after both scans pass, the app is automatically deployed to Railway. No manual deployment needed.
 
-### `npm run eject`
+## What I Learned
+- Shift-left security — catching vulnerabilities at commit time
+- Docker multi-stage builds for smaller, more secure images
+- GitHub Actions workflow orchestration with job dependencies
+- Real-world DevSecOps tooling (Gitleaks, Trivy)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Project Structure
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+devsecops-secure-pipeline/
+├── .github/
+│   └── workflows/
+│       └── security.yml    # Pipeline definition
+├── src/                    # React app
+├── Dockerfile              # Multi-stage build
+├── nginx.conf              # Web server config
+└── README.md
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Troubleshooting & Lessons Learned
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Real problems I faced during this project and how I solved them.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Problem 1 — Docker Desktop failed to start
+**Error:** `Virtualization support not detected`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**Cause:** Hyper-V and WSL2 were not enabled on Windows.
 
-### Code Splitting
+**Solution:**
+```powershell
+dism /online /enable-feature /featurename:HypervisorPlatform /all /norestart
+dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+bcdedit /set hypervisorlaunchtype auto
+wsl --install
+```
+Then restarted the PC. Docker Desktop started normally after that.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+**Lesson:** Docker on Windows requires WSL2 as a Linux kernel layer.
+Docker is a Linux technology — it needs a Linux kernel to run,
+even on Windows.
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Problem 2 — Gitleaks detected secrets but did not block the pipeline
+**Error:** Pipeline stayed green even with leaked AWS credentials.
 
-### Making a Progressive Web App
+**Cause:** `gitleaks/gitleaks-action@v2` requires a paid license
+to block the pipeline with exit code 1. Without a license,
+it only shows a warning.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+**Solution:** Install Gitleaks directly on the GitHub Actions runner
+and run it manually with `--exit-code 1` flag:
+```yaml
+- name: Install Gitleaks
+  run: |
+    wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
+    tar -xzf gitleaks_8.18.2_linux_x64.tar.gz
+    sudo mv gitleaks /usr/local/bin/
 
-### Advanced Configuration
+- name: Run Gitleaks
+  run: |
+    gitleaks detect \
+      --source . \
+      --log-opts "HEAD~1..HEAD" \
+      --exit-code 1 \
+      --verbose
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+**Lesson:** Always read the licensing terms of security tools.
+Free tiers often have limitations that are not obvious at first.
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Problem 3 — TruffleHog kept blocking even after removing secrets
+**Error:** Pipeline stayed red after removing AWS credentials from code.
 
-### `npm run build` fails to minify
+**Cause:** TruffleHog scans the full Git history by default.
+Even after removing credentials, they still existed in previous commits.
+TruffleHog detected them in the diff of the "fix" commit itself
+(the removed lines are still visible in the diff).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Solution:** Switched back to Gitleaks with `--log-opts "HEAD~1..HEAD"`
+to scan only the latest commit diff, not the full history.
+
+**Lesson:** Secrets committed to Git are permanently compromised —
+even after deletion. In a real company, you must:
+1. Revoke the secret immediately
+2. Purge Git history using BFG Repo Cleaner
+3. Rotate with a new secret
+
+---
+
+### Problem 4 — Railway CLI kept failing with different errors
+**Error 1:** `unexpected argument '--project-id' found`
+**Error 2:** `--environment is required when using --project`
+**Error 3:** `Multiple services found. Please specify --service`
+
+**Cause:** Railway CLI changes its syntax frequently between versions.
+Each new version broke the previous command flags.
+
+**Solution:** Bypassed the CLI entirely and used Railway's GraphQL API
+directly via `curl`:
+```yaml
+- name: Deploy via Railway API
+  run: |
+    curl -X POST \
+      -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+      -H "Content-Type: application/json" \
+      -d '{"query": "mutation { deploymentCreate(input: { projectId: \"${{ secrets.RAILWAY_PROJECT_ID }}\", environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\" }) { id } }"}' \
+      https://backboard.railway.app/graphql/v2
+```
+
+**Lesson:** When a CLI tool is unstable, go one level deeper
+and use the API directly. APIs are more stable than CLIs
+because they are versioned and documented contracts.
+
+---
+
+### Key Takeaways
+
+| Problem | Root Cause | What I Learned |
+|---------|-----------|----------------|
+| Docker not starting | WSL2 missing | Docker needs Linux kernel on Windows |
+| Gitleaks not blocking | Free tier limitation | Always check tool licensing |
+| TruffleHog seeing old secrets | Git history is permanent | Secrets in Git = always compromised |
+| Railway CLI failing | Unstable CLI syntax | Use APIs when CLIs are unreliable |
