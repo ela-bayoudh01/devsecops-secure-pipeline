@@ -51,7 +51,7 @@ jobs:
           exit-code: 1
           severity: CRITICAL
 
-    # ─── Job 3 : Deploy to Railway ───
+  # ─── Job 3 : Deploy to Railway ───
   deploy:
     name: Deploy to Railway
     runs-on: ubuntu-latest
@@ -60,10 +60,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        run: railway up --detach --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment production
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Deploy via Railway API
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query": "mutation { deploymentCreate(input: { projectId: \"${{ secrets.RAILWAY_PROJECT_ID }}\", environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\" }) { id } }"}' \
+            https://backboard.railway.app/graphql/v2
