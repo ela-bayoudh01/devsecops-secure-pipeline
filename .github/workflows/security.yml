@@ -24,7 +24,7 @@ jobs:
           path: ./
           base: ${{ github.event.before }}
           head: ${{ github.sha }}
-          extra_args: --only-verified=false --fail
+          extra_args: --fail
 
   # ─── Job 2 : Container Scanning with Trivy ───
   trivy:
