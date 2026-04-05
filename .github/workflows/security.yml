@@ -22,8 +22,8 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: HEAD~1
-          head: HEAD
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
           extra_args: --only-verified=false --fail
 
   # ─── Job 2 : Container Scanning with Trivy ───
