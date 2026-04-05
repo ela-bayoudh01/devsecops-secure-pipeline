@@ -8,8 +8,8 @@ on:
 
 jobs:
 
-  # Job 1 : Secret Scanning with Gitleaks
-  gitleaks:
+  # ─── Job 1 : Secret Scanning with TruffleHog ───
+  secret-scan:
     name: Scan for Secrets
     runs-on: ubuntu-latest
     steps:
@@ -18,14 +18,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Gitleaks
-        run: |
-          docker run --rm -v $(pwd):/path zricethezav/gitleaks:latest detect \
-            --source /path \
-            --exit-code 1 \
-            -v
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: HEAD~1
+          extra_args: --only-verified=false --fail
 
-  #Job 2 : Container Scanning with Trivy
+  # ─── Job 2 : Container Scanning with Trivy ───
   trivy:
     name: Scan Docker Image
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
       - name: Build Docker image
         run: docker build -t devsecops-demo .
 
-      - name: Run Trivy vulnerability scanner 
+      - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: devsecops-demo
