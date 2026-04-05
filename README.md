@@ -1,5 +1,10 @@
 # DevSecOps Automated Security Pipeline
 
+![Pipeline](https://github.com/ela-bayoudh01/devsecops-secure-pipeline/actions/workflows/security.yml/badge.svg)
+![Docker](https://img.shields.io/badge/Docker-ready-blue)
+![Gitleaks](https://img.shields.io/badge/Gitleaks-protected-green)
+![Trivy](https://img.shields.io/badge/Trivy-scanned-green)
+
 A production-ready DevSecOps pipeline built with GitHub Actions, featuring automated secret scanning, container vulnerability scanning, and continuous deployment.
 
 ## Live Demo
@@ -43,6 +48,10 @@ Only after both scans pass, the app is automatically deployed to Railway. No man
 - Docker multi-stage builds for smaller, more secure images
 - GitHub Actions workflow orchestration with job dependencies
 - Real-world DevSecOps tooling (Gitleaks, Trivy)
+
+## Pipeline in Action
+
+![Pipeline Success](docs/pipeline-screenshot.png)
 
 ## Project Structure
 
