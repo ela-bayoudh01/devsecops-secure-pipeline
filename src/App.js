@@ -14,3 +14,4 @@ export default function App() {
     </div>
   )
 }
+const API_KEY = "AKIAIOSFODNN7EXAMPLE123"
