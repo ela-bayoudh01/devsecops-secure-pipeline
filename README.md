@@ -6,9 +6,26 @@
 ![Trivy](https://img.shields.io/badge/Trivy-scanned-green)
 
 A production-ready DevSecOps pipeline built with GitHub Actions, featuring automated secret scanning, container vulnerability scanning, and continuous deployment.
+## Why I Built This
+
+This project serves two purposes :
+
+**1. A learning project** — I built this to teach myself DevSecOps
+from scratch. I had theoretical knowledge about CI/CD and security
+pipelines but no hands-on experience. Building something real,
+breaking it, debugging it, and fixing it taught me more than
+any tutorial could.
+
+**2. A useful tool for developers** — The Git Survival Guide app
+itself is something I genuinely needed. A clean, searchable
+reference for Git commands organized by situation — not by
+documentation order. If it helps other developers too, even better.
+
+This is what I believe about learning technical skills :
+> Build something broken. Fix it. That's where the real learning happens.
 
 ## Live Demo
-🌍 [Git Survival Guide](https://devsecops-secure-pipeline-production.up.railway.app)
+🌍 [Git Survival Guide](https://git-survival-guide.up.railway.app/)
 
 ## Pipeline Architecture
 git push → Secret Scan (Gitleaks) → Container Scan (Trivy) → Deploy (Railway)
@@ -53,16 +70,6 @@ Only after both scans pass, the app is automatically deployed to Railway. No man
 
 ![Pipeline Success](docs/pipeline-screenshot.png)
 
-## Project Structure
-
-devsecops-secure-pipeline/
-├── .github/
-│   └── workflows/
-│       └── security.yml    # Pipeline definition
-├── src/                    # React app
-├── Dockerfile              # Multi-stage build
-├── nginx.conf              # Web server config
-└── README.md
 
 ## Troubleshooting & Lessons Learned
 
